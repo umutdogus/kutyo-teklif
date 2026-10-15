@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 import math
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Kütyo Prefabrik Teklif Programı", layout="wide")
-import streamlit.components.v1 as components
 
 # --- GİZLİLİK AYARLARI (GÖRÜNMEZLİK PELERİNİ + AVCI KOD) ---
 st.markdown(
@@ -67,7 +67,7 @@ if not st.session_state.authenticated:
                 st.rerun()
             else:
                 st.error("Hatalı şifre girdiniz!")
-    st.stop() # Şifre girilene kadar alttaki kodların çalışmasını durdurur
+    st.stop()
 
 # --- 1. VERİ GİRİŞİ BİRİM FİYATLARI (Baz Fiyatlar) ---
 PRICES = {
@@ -78,7 +78,7 @@ PRICES = {
     "PROJE": 350.0, "NAKLIYE": 300.78, "MONTAJ": 1010.75
 }
 
-# --- 2. REFERANSLAR (Kısaltılmış Gösterim, Önceki Verilerinizle Aynı) ---
+# --- 2. REFERANSLAR ---
 REFERENCES = {
     (15.44, 8.5): {"asik": 8, "doseme": 8, "l_kiris": 4, "deprem_kiris": 3, "el": {"AŞIK": {"C50": 0.28, "DEMIR": 29, "HASIR": 7.541499, "HALAT": 13}, "OLUK": {"C40": 0.74, "DEMIR": 61, "PLAKA": 25, "HASIR": 16.767975, "IZ_OLUK": 1}, "MAKAS": {"C40": 3.44, "DEMIR": 489, "PLAKA": 4, "HALAT": 92}, "DÖŞEME PLAĞI": {"C40": 1.71, "DEMIR": 65, "HASIR": 42, "HALAT": 22}, "L KİRİŞİ": {"C30": 1.54, "DEMIR": 274, "PLAKA": 8}, "DEPREM KİRİŞİ": {"C40": 1.20, "DEMIR": 135, "PLAKA": 8}, "VİNÇ KİRİŞİ": {"C40": 1.49, "DEMIR": 330, "PLAKA": 20}}},
     (15.44, 8.0): {"asik": 8, "doseme": 8, "l_kiris": 4, "deprem_kiris": 3, "el": {"AŞIK": {"C50": 0.26, "DEMIR": 28, "HASIR": 7.072674, "HALAT": 12}, "OLUK": {"C40": 0.70, "DEMIR": 58, "PLAKA": 24, "HASIR": 15.950025, "IZ_OLUK": 1}, "MAKAS": {"C40": 3.44, "DEMIR": 487, "PLAKA": 4, "HALAT": 92}, "DÖŞEME PLAĞI": {"C40": 1.71, "DEMIR": 65, "HASIR": 42, "HALAT": 22}, "L KİRİŞİ": {"C30": 1.54, "DEMIR": 274, "PLAKA": 8}, "DEPREM KİRİŞİ": {"C40": 1.13, "DEMIR": 128, "PLAKA": 8}, "VİNÇ KİRİŞİ": {"C40": 1.37, "DEMIR": 319, "PLAKA": 19}}},
@@ -127,8 +127,8 @@ st.markdown(
 col1, col2, col3 = st.columns(3)
 with col1:
     st.subheader("Geometri & Boyut")
-    m_mesafe = st.number_input("Makas Yönü Aks Mesafesi (m)", min_value=1.0, max_value=28.0, value=15.0)
-    o_mesafe = st.number_input("Oluk Yönü Aks Mesafesi (m)", value=8.0)
+    m_mesafe = st.number_input("Makas Yönü Aks Mesafesi (m) (1 adet makas boyu)", min_value=1.0, max_value=28.0, value=15.0)
+    o_mesafe = st.number_input("Oluk Yönü Aks Mesafesi (m) (1 adet oluk boyu)", value=8.0)
     h_bina = st.number_input("Bina Yüksekliği (m)", value=8.0)
     st.markdown("---")
     bina_eni = st.number_input("Bina Eni (m)", value=20.0)
@@ -143,6 +143,7 @@ with col3:
     st.subheader("Opsiyonlar & Finans")
     is_arakat = st.radio("Tek aksta arakat olsun mu?", ("Hayır", "Evet")) == "Evet"
     is_vinc = st.radio("Vinç Yükü Var mı? (12ton'a kadar)", ("Hayır", "Evet")) == "Evet"
+    is_cephe = st.radio("Cephe Paneli Olsun mu?", ("Evet", "Hayır")) == "Evet"
     st.markdown("---")
     dolar_kuru = st.number_input("Güncel Dolar Kuru (TL)", value=49.30, step=0.10)
     st.info("Hesaplamalara %2 zam uygulanmış olup, Dolar kuruna endekslidir.")
@@ -157,10 +158,13 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
         artis_carpani = 1.02 * (dolar_kuru / baz_dolar)
         CURRENT_PRICES = {k: v * artis_carpani for k, v in PRICES.items()}
         
-        cevre = 2 * (bina_eni + bina_boyu)
-        brut_cephe = cevre * (h_bina + 0.20)
-        pencere_kapı_firesi = (cevre * 1.0) + (5.0 * 4.0)
-        cephe_m2 = max(0, brut_cephe - pencere_kapı_firesi)
+        # Sadece "Evet" seçildiyse cephe paneli hesapla
+        cephe_m2 = 0.0
+        if is_cephe:
+            cevre = 2 * (bina_eni + bina_boyu)
+            brut_cephe = cevre * (h_bina + 0.20)
+            pencere_kapı_firesi = (cevre * 1.0) + (5.0 * 4.0)
+            cephe_m2 = max(0, brut_cephe - pencere_kapı_firesi)
         
         if h_bina <= 8.0:
             cx, cy = 0.45, 0.45
@@ -175,7 +179,6 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
         
         gercek_aks_sayisi = o_aks + 1 
         
-        # --- RÜZGAR KOLONU GÜNCELLEMESİ ---
         if m_mesafe <= 17.0:
             ruzgar_adet = 2 * m_hol
         else:
@@ -231,12 +234,14 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
                 "STRAFOR (m3)": props.get("STRAFOR", 0) * adet
             })
 
-        metraj_list.append({
-            "ELEMAN": "CEPHE PANELİ (m2)", "ADET": cephe_m2,
-            "C30 (m3)": 0.087 * cephe_m2, "C40 (m3)": 0.0, "C45 (m3)": 0.0, "C50 (m3)": 0.0,
-            "DEMİR (kg)": 0.53 * cephe_m2, "PLAKA (kg)": 1.00 * cephe_m2, "HASIR (kg)": 4.67 * cephe_m2,
-            "HALAT (kg)": 0.0, "İZ_OLUK": 0.0, "İZ_CEPHE": 1.50 * cephe_m2, "STRAFOR (m3)": 0.04 * cephe_m2
-        })
+        # Sadece "Evet" seçildiyse tabloya ekle
+        if is_cephe:
+            metraj_list.append({
+                "ELEMAN": "CEPHE PANELİ (m2)", "ADET": cephe_m2,
+                "C30 (m3)": 0.087 * cephe_m2, "C40 (m3)": 0.0, "C45 (m3)": 0.0, "C50 (m3)": 0.0,
+                "DEMİR (kg)": 0.53 * cephe_m2, "PLAKA (kg)": 1.00 * cephe_m2, "HASIR (kg)": 4.67 * cephe_m2,
+                "HALAT (kg)": 0.0, "İZ_OLUK": 0.0, "İZ_CEPHE": 1.50 * cephe_m2, "STRAFOR (m3)": 0.04 * cephe_m2
+            })
             
         df = pd.DataFrame(metraj_list)
         
@@ -263,7 +268,6 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
         amortisman = toplam_beton_m3 * CURRENT_PRICES["AMORTISMAN"]
         proje_hizmeti = toplam_beton_m3 * CURRENT_PRICES["PROJE"]
         
-        # --- NAKLİYE GÜNCELLEMESİ (Makas İlave Nakliye Dolar Kuruna Endeksli Eklendi) ---
         makas_ilave_nakliye = makas_adet * 15000.0 * artis_carpani
         nakliye = (toplam_tonaj * CURRENT_PRICES["NAKLIYE"]) + makas_ilave_nakliye
         montaj = toplam_tonaj * CURRENT_PRICES["MONTAJ"]
@@ -272,7 +276,9 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
         
         st.markdown("### Eleman Bazlı Metraj ve Fiyat")
         st.dataframe(df.style.format(precision=2), use_container_width=True)
-        st.info(f"**Not:** Cephe Paneli alanından ({cephe_m2:.2f} m²) 1 m bant pencere ve 1 adet 4x5 kapı düşülmüştür.")
+        
+        if is_cephe:
+            st.info(f"**Not:** Cephe Paneli alanından ({cephe_m2:.2f} m²) 1 m bant pencere ve 1 adet 4x5 kapı düşülmüştür.")
         
         col_a, col_b = st.columns(2)
         with col_a:
@@ -295,7 +301,6 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             
             tr_map = str.maketrans("şŞğĞıİöÖçÇüÜ", "sSgGiIoOcCuU")
             
-            # Sayfa sonu boşluğunu kapattık ki ikinci sayfaya taşmasın
             pdf = FPDF(orientation='L', unit='mm', format='A4')
             pdf.set_auto_page_break(auto=True, margin=10) 
             pdf.add_page()
@@ -309,7 +314,7 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf.set_font("Arial", "", 9)
             info1 = f"Makas Yonu: {m_mesafe}m | Oluk Yonu: {o_mesafe}m | Bina Yuksekligi: {h_bina}m | Bina Eni: {bina_eni}m | Bina Boyu: {bina_boyu}m"
             pdf.cell(0, 5, info1, ln=True)
-            info2 = f"Hol Sayisi: {m_hol} | Oluk Yonu Aks Arasi: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayir'} | Vinc: {'Evet' if is_vinc else 'Hayir'}"
+            info2 = f"Hol Sayisi: {m_hol} | Oluk Aks Arasi: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayir'} | Vinc: {'Evet' if is_vinc else 'Hayir'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayir'}"
             pdf.cell(0, 5, info2, ln=True)
             pdf.ln(3)
             
@@ -319,7 +324,7 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             cols = ["ELEMAN", "MIKTAR", "C30", "C40", "C45", "C50", "DEMIR", "PLK.", "HSR.", "HLT.", "IZL.O", "IZL.C", "STRFR", "TOPLAM(TL)"]
             col_widths = [40, 14, 13, 13, 13, 13, 15, 12, 14, 12, 12, 12, 14, 25]
             
-            pdf.set_fill_color(220, 230, 241) # Tablo başlığı için hafif mavi renk
+            pdf.set_fill_color(220, 230, 241) 
             pdf.set_font("Arial", "B", 7)
             for i, col in enumerate(cols):
                 pdf.cell(col_widths[i], 5, col, border=1, align="C", fill=True)
@@ -355,10 +360,9 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf.ln(2)
             
             pdf.set_font("Arial", "B", 11)
-            pdf.set_fill_color(255, 255, 204) # Toplam fiyat için hafif sarı vurgu
+            pdf.set_fill_color(255, 255, 204) 
             pdf.cell(0, 7, f"GENEL TOPLAM TEKLIF BEDELI: {genel_toplam + ekstra_giderler_toplami:,.2f} TL", ln=True, fill=True)
             
-            # Alt bilgi - Hemen tablonun altına eklendi (Boş sayfa yaratmaz)
             pdf.ln(5)
             pdf.set_font("Arial", "I", 7)
             pdf.set_text_color(128)
