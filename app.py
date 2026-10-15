@@ -10,6 +10,8 @@ gizleme_kodu = """
 header {visibility: hidden;} 
 footer {visibility: hidden;} 
 .stDeployButton {display: none;} 
+.viewerBadge_container {display: none !important;} 
+.viewerBadge_link {display: none !important;} 
 </style>
 """
 st.markdown(gizleme_kodu, unsafe_allow_html=True)
