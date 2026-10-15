@@ -3,6 +3,17 @@ import pandas as pd
 import math
 
 st.set_page_config(page_title="Kütyo Prefabrik Teklif Programı", layout="wide")
+# --- GİZLİLİK AYARLARI (GÖRÜNMEZLİK PELERİNİ) ---
+gizleme_kodu = """
+<style>
+#MainMenu {visibility: hidden;} 
+header {visibility: hidden;} 
+footer {visibility: hidden;} 
+.stDeployButton {display: none;} 
+</style>
+"""
+st.markdown(gizleme_kodu, unsafe_allow_html=True)
+# ------------------------------------------------
 
 # --- ŞİFRE KORUMASI ---
 if "authenticated" not in st.session_state:
