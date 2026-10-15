@@ -3,15 +3,27 @@ import pandas as pd
 import math
 
 st.set_page_config(page_title="Kütyo Prefabrik Teklif Programı", layout="wide")
-# --- GİZLİLİK AYARLARI (GÖRÜNMEZLİK PELERİNİ) ---
+# --- GİZLİLİK AYARLARI (NÜKLEER GÖRÜNMEZLİK PELERİNİ) ---
 gizleme_kodu = """
 <style>
-#MainMenu {visibility: hidden;} 
-header {visibility: hidden;} 
-footer {visibility: hidden;} 
-.stDeployButton {display: none;} 
-.viewerBadge_container {display: none !important;} 
-.viewerBadge_link {display: none !important;} 
+/* Ana menü ve üst boşluklar */
+#MainMenu {visibility: hidden !important;}
+header {visibility: hidden !important;}
+footer {visibility: hidden !important;}
+
+/* Sağ üstteki butonlar ve araç çubuğu (Tam ekranda çıkanlar dâhil) */
+.stDeployButton {display: none !important;}
+[data-testid="stToolbar"] {display: none !important;}
+[data-testid="stDecoration"] {display: none !important;}
+[data-testid="stStatusWidget"] {visibility: hidden !important;}
+
+/* Sağ alttaki Streamlit Community Cloud rozetleri */
+.viewerBadge_container {display: none !important;}
+.viewerBadge_link {display: none !important;}
+.styles_viewerBadge__CvC9N {display: none !important;}
+
+/* Tablo ve bileşenlerin tam ekran (fullscreen) moduna geçmesini / ikonlarını engelleme */
+button[title="View fullscreen"] {display: none !important;}
 </style>
 """
 st.markdown(gizleme_kodu, unsafe_allow_html=True)
