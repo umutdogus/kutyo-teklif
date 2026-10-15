@@ -3,30 +3,53 @@ import pandas as pd
 import math
 
 st.set_page_config(page_title="Kütyo Prefabrik Teklif Programı", layout="wide")
-# --- GİZLİLİK AYARLARI (NÜKLEER GÖRÜNMEZLİK PELERİNİ) ---
-gizleme_kodu = """
-<style>
-/* Ana menü ve üst boşluklar */
-#MainMenu {visibility: hidden !important;}
-header {visibility: hidden !important;}
-footer {visibility: hidden !important;}
+import streamlit.components.v1 as components
 
-/* Sağ üstteki butonlar ve araç çubuğu (Tam ekranda çıkanlar dâhil) */
-.stDeployButton {display: none !important;}
-[data-testid="stToolbar"] {display: none !important;}
-[data-testid="stDecoration"] {display: none !important;}
-[data-testid="stStatusWidget"] {visibility: hidden !important;}
+# --- GİZLİLİK AYARLARI (GÖRÜNMEZLİK PELERİNİ + AVCI KOD) ---
+st.markdown(
+    """
+    <style>
+    /* Üst menü, alt bilgi ve tüm Streamlit barları */
+    header {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    
+    /* Tablolardaki tam ekran ikonunu kalıcı olarak yok et */
+    button[title="View fullscreen"] {visibility: hidden !important; display: none !important;}
+    
+    /* İsim/Profil rozetlerini hedef alan agresif (wildcard) seçiciler */
+    div[class*="viewerBadge"] {visibility: hidden !important; display: none !important;}
+    div[class*="styles_viewerBadge"] {visibility: hidden !important; display: none !important;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-/* Sağ alttaki Streamlit Community Cloud rozetleri */
-.viewerBadge_container {display: none !important;}
-.viewerBadge_link {display: none !important;}
-.styles_viewerBadge__CvC9N {display: none !important;}
-
-/* Tablo ve bileşenlerin tam ekran (fullscreen) moduna geçmesini / ikonlarını engelleme */
-button[title="View fullscreen"] {display: none !important;}
-</style>
-"""
-st.markdown(gizleme_kodu, unsafe_allow_html=True)
+# Streamlit'in sonradan yüklediği ikonları anında silen sürekli çalışan avcı kod
+components.html(
+    """
+    <script>
+    setInterval(function() {
+        try {
+            // Ana çerçevedeki reklamları ve butonları yok et
+            var badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"], [data-testid="stToolbar"], button[title="View fullscreen"]');
+            for (var i = 0; i < badges.length; i++) {
+                badges[i].style.setProperty('display', 'none', 'important');
+            }
+        } catch(e) {}
+        try {
+            // İç çerçevedeki kalıntıları yok et
+            var localBadges = document.querySelectorAll('div[class*="viewerBadge"], [data-testid="stToolbar"], button[title="View fullscreen"]');
+            for (var j = 0; j < localBadges.length; j++) {
+                localBadges[j].style.setProperty('display', 'none', 'important');
+            }
+        } catch(e) {}
+    }, 1000);
+    </script>
+    """,
+    height=0,
+    width=0,
+)
 # ------------------------------------------------
 
 # --- ŞİFRE KORUMASI ---
