@@ -486,7 +486,8 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
                 pdf2.set_font("Arial", "B", 14)
                 
             pdf2.set_fill_color(240, 240, 240)
-            pdf2.cell(0, 10, f"ANAHTAR TESLİM TOPLAM BEDEL: {musteri_fiyat:,.2f} TL + KDV", ln=True, align="C", fill=True)
+            # BURASI GÜNCELLENDİ
+            pdf2.cell(0, 10, f"PREFABRİK YAPI BEDELİ: {musteri_fiyat:,.2f} TL + KDV", ln=True, align="C", fill=True)
             pdf2.ln(8)
             
             if os.path.exists(font_reg):
