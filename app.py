@@ -9,15 +9,10 @@ st.set_page_config(page_title="Kütyo Prefabrik Teklif Programı", layout="wide"
 st.markdown(
     """
     <style>
-    /* Üst menü, alt bilgi ve tüm Streamlit barları */
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-    
-    /* Tablolardaki tam ekran ikonunu kalıcı olarak yok et */
     button[title="View fullscreen"] {visibility: hidden !important; display: none !important;}
-    
-    /* İsim/Profil rozetlerini hedef alan agresif (wildcard) seçiciler */
     div[class*="viewerBadge"] {visibility: hidden !important; display: none !important;}
     div[class*="styles_viewerBadge"] {visibility: hidden !important; display: none !important;}
     </style>
@@ -25,20 +20,17 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Streamlit'in sonradan yüklediği ikonları anında silen sürekli çalışan avcı kod
 components.html(
     """
     <script>
     setInterval(function() {
         try {
-            // Ana çerçevedeki reklamları ve butonları yok et
             var badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"], [data-testid="stToolbar"], button[title="View fullscreen"]');
             for (var i = 0; i < badges.length; i++) {
                 badges[i].style.setProperty('display', 'none', 'important');
             }
         } catch(e) {}
         try {
-            // İç çerçevedeki kalıntıları yok et
             var localBadges = document.querySelectorAll('div[class*="viewerBadge"], [data-testid="stToolbar"], button[title="View fullscreen"]');
             for (var j = 0; j < localBadges.length; j++) {
                 localBadges[j].style.setProperty('display', 'none', 'important');
@@ -158,7 +150,6 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
         artis_carpani = 1.02 * (dolar_kuru / baz_dolar)
         CURRENT_PRICES = {k: v * artis_carpani for k, v in PRICES.items()}
         
-        # Sadece "Evet" seçildiyse cephe paneli hesapla
         cephe_m2 = 0.0
         if is_cephe:
             cevre = 2 * (bina_eni + bina_boyu)
@@ -234,7 +225,6 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
                 "STRAFOR (m3)": props.get("STRAFOR", 0) * adet
             })
 
-        # Sadece "Evet" seçildiyse tabloya ekle
         if is_cephe:
             metraj_list.append({
                 "ELEMAN": "CEPHE PANELİ (m2)", "ADET": cephe_m2,
@@ -294,86 +284,142 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             st.warning(f"Operasyon ve Nakliye Toplamı: ₺ {ekstra_giderler_toplami:,.2f}")
             st.error(f"GENEL TOPLAM TEKLİF BEDELİ: ₺ {(genel_toplam + ekstra_giderler_toplami):,.2f}")
 
-        # --- TEK SAYFA PROFESYONEL PDF ---
+        # --- PDF OLUŞTURMA BÖLÜMÜ ---
         try:
             from fpdf import FPDF
             import base64
             
             tr_map = str.maketrans("şŞğĞıİöÖçÇüÜ", "sSgGiIoOcCuU")
+            total_maliyet = genel_toplam + ekstra_giderler_toplami
+            musteri_fiyat = total_maliyet * 1.25  # %25 Kar Marjı
             
-            pdf = FPDF(orientation='L', unit='mm', format='A4')
-            pdf.set_auto_page_break(auto=True, margin=10) 
-            pdf.add_page()
+            # --- 1. PDF: İÇ KULLANIM (Maliyet Analizi) ---
+            pdf1 = FPDF(orientation='L', unit='mm', format='A4')
+            pdf1.set_auto_page_break(auto=True, margin=10) 
+            pdf1.add_page()
+            pdf1.set_font("Arial", "B", 15)
+            pdf1.cell(0, 8, "KUTYO PREFABRIK IC MALIYET RAPORU", ln=True, align="C")
+            pdf1.ln(3)
             
-            pdf.set_font("Arial", "B", 15)
-            pdf.cell(0, 8, "KUTYO PREFABRIK TEKLIF FORMU", ln=True, align="C")
-            pdf.ln(3)
+            pdf1.set_font("Arial", "B", 10)
+            pdf1.cell(0, 5, "1. PROJE BILGILERI", ln=True)
+            pdf1.set_font("Arial", "", 9)
+            pdf1.cell(0, 5, f"Makas Yonu: {m_mesafe}m | Oluk Yonu: {o_mesafe}m | Bina Yuksekligi: {h_bina}m | Bina Eni: {bina_eni}m | Bina Boyu: {bina_boyu}m", ln=True)
+            pdf1.cell(0, 5, f"Hol Sayisi: {m_hol} | Oluk Aks Arasi: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayir'} | Vinc: {'Evet' if is_vinc else 'Hayir'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayir'}", ln=True)
+            pdf1.ln(3)
             
-            pdf.set_font("Arial", "B", 10)
-            pdf.cell(0, 5, "1. PROJE BILGILERI", ln=True)
-            pdf.set_font("Arial", "", 9)
-            info1 = f"Makas Yonu: {m_mesafe}m | Oluk Yonu: {o_mesafe}m | Bina Yuksekligi: {h_bina}m | Bina Eni: {bina_eni}m | Bina Boyu: {bina_boyu}m"
-            pdf.cell(0, 5, info1, ln=True)
-            info2 = f"Hol Sayisi: {m_hol} | Oluk Aks Arasi: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayir'} | Vinc: {'Evet' if is_vinc else 'Hayir'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayir'}"
-            pdf.cell(0, 5, info2, ln=True)
-            pdf.ln(3)
-            
-            pdf.set_font("Arial", "B", 10)
-            pdf.cell(0, 5, "2. METRAJ VE MALIYET TABLOSU", ln=True)
+            pdf1.set_font("Arial", "B", 10)
+            pdf1.cell(0, 5, "2. METRAJ VE MALIYET TABLOSU", ln=True)
             
             cols = ["ELEMAN", "MIKTAR", "C30", "C40", "C45", "C50", "DEMIR", "PLK.", "HSR.", "HLT.", "IZL.O", "IZL.C", "STRFR", "TOPLAM(TL)"]
             col_widths = [40, 14, 13, 13, 13, 13, 15, 12, 14, 12, 12, 12, 14, 25]
             
-            pdf.set_fill_color(220, 230, 241) 
-            pdf.set_font("Arial", "B", 7)
+            pdf1.set_fill_color(220, 230, 241) 
+            pdf1.set_font("Arial", "B", 7)
             for i, col in enumerate(cols):
-                pdf.cell(col_widths[i], 5, col, border=1, align="C", fill=True)
-            pdf.ln()
+                pdf1.cell(col_widths[i], 5, col, border=1, align="C", fill=True)
+            pdf1.ln()
             
-            pdf.set_font("Arial", "", 7)
+            pdf1.set_font("Arial", "", 7)
             for idx, row in df.iterrows():
                 el_name = str(row['ELEMAN']).translate(tr_map)
-                pdf.cell(col_widths[0], 5, el_name, border=1)
+                pdf1.cell(col_widths[0], 5, el_name, border=1)
                 adet_str = f"{row['ADET']:.2f}" if isinstance(row['ADET'], float) and not row['ADET'].is_integer() else str(int(row['ADET']))
-                pdf.cell(col_widths[1], 5, adet_str, border=1, align="C")
-                pdf.cell(col_widths[2], 5, f"{row['C30 (m3)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[3], 5, f"{row['C40 (m3)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[4], 5, f"{row['C45 (m3)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[5], 5, f"{row['C50 (m3)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[6], 5, f"{row['DEMİR (kg)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[7], 5, f"{row['PLAKA (kg)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[8], 5, f"{row['HASIR (kg)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[9], 5, f"{row['HALAT (kg)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[10], 5, f"{row['İZ_OLUK']:.0f}", border=1, align="C")
-                pdf.cell(col_widths[11], 5, f"{row['İZ_CEPHE']:.1f}", border=1, align="C")
-                pdf.cell(col_widths[12], 5, f"{row['STRAFOR (m3)']:.2f}", border=1, align="C")
-                pdf.cell(col_widths[13], 5, f"{row['TOPLAM MALİYET (TL)']:,.2f}", border=1, align="R")
-                pdf.ln()
+                pdf1.cell(col_widths[1], 5, adet_str, border=1, align="C")
+                pdf1.cell(col_widths[2], 5, f"{row['C30 (m3)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[3], 5, f"{row['C40 (m3)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[4], 5, f"{row['C45 (m3)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[5], 5, f"{row['C50 (m3)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[6], 5, f"{row['DEMİR (kg)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[7], 5, f"{row['PLAKA (kg)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[8], 5, f"{row['HASIR (kg)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[9], 5, f"{row['HALAT (kg)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[10], 5, f"{row['İZ_OLUK']:.0f}", border=1, align="C")
+                pdf1.cell(col_widths[11], 5, f"{row['İZ_CEPHE']:.1f}", border=1, align="C")
+                pdf1.cell(col_widths[12], 5, f"{row['STRAFOR (m3)']:.2f}", border=1, align="C")
+                pdf1.cell(col_widths[13], 5, f"{row['TOPLAM MALİYET (TL)']:,.2f}", border=1, align="R")
+                pdf1.ln()
                 
-            pdf.ln(3)
+            pdf1.ln(3)
+            pdf1.set_font("Arial", "B", 10)
+            pdf1.cell(0, 5, "3. SANTIYE VE OPERASYON MALIYETLERI", ln=True)
+            pdf1.set_font("Arial", "", 9)
+            pdf1.cell(0, 5, f"Toplam Beton Hacmi: {toplam_beton_m3:.2f} m3 | Toplam Tonaj: {toplam_tonaj:.2f} Ton", ln=True)
+            pdf1.cell(0, 5, f"Malzeme Maliyeti: {genel_toplam:,.2f} TL | Operasyon ve Nakliye Toplami: {ekstra_giderler_toplami:,.2f} TL", ln=True)
+            pdf1.ln(2)
             
-            pdf.set_font("Arial", "B", 10)
-            pdf.cell(0, 5, "3. SANTIYE VE OPERASYON MALIYETLERI", ln=True)
-            pdf.set_font("Arial", "", 9)
-            pdf.cell(0, 5, f"Toplam Beton Hacmi: {toplam_beton_m3:.2f} m3 | Toplam Tonaj: {toplam_tonaj:.2f} Ton", ln=True)
-            pdf.cell(0, 5, f"Malzeme Maliyeti: {genel_toplam:,.2f} TL | Operasyon ve Nakliye Toplami: {ekstra_giderler_toplami:,.2f} TL", ln=True)
-            pdf.ln(2)
+            pdf1.set_font("Arial", "B", 11)
+            pdf1.set_fill_color(255, 255, 204) 
+            pdf1.cell(0, 7, f"GENEL TOPLAM MALIYET BEDELI: {total_maliyet:,.2f} TL", ln=True, fill=True)
             
-            pdf.set_font("Arial", "B", 11)
-            pdf.set_fill_color(255, 255, 204) 
-            pdf.cell(0, 7, f"GENEL TOPLAM TEKLIF BEDELI: {genel_toplam + ekstra_giderler_toplami:,.2f} TL", ln=True, fill=True)
+            out1 = pdf1.output(dest='S')
+            b64_1 = base64.b64encode(out1.encode('latin-1') if isinstance(out1, str) else bytes(out1)).decode()
             
-            pdf.ln(5)
-            pdf.set_font("Arial", "I", 7)
-            pdf.set_text_color(128)
-            pdf.cell(0, 5, "Kacmaz Prefabrik - Yazilim: Y. Ins. Muh. Umut Dogus Kacmaz", 0, 0, 'R')
+            # --- 2. PDF: MÜŞTERİ TEKLİF DOSYASI (Kurumsal, Tek Sayfa, %25 Kârlı) ---
+            pdf2 = FPDF(orientation='P', unit='mm', format='A4')
+            pdf2.set_auto_page_break(auto=True, margin=15)
+            pdf2.add_page()
             
-            out = pdf.output(dest='S')
-            pdf_bytes = out.encode('latin-1') if isinstance(out, str) else bytes(out)
-            b64 = base64.b64encode(pdf_bytes).decode()
+            pdf2.set_font("Arial", "B", 16)
+            pdf2.cell(0, 10, "KUTYO PREFABRIK TEKLIF FORMU", ln=True, align="C")
+            pdf2.ln(5)
             
-            href = f'<br><div style="text-align: right;"><a href="data:application/pdf;base64,{b64}" download="Kutyo_Prefabrik_Teklif.pdf" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #ff4b4b; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">📥 PDF Olarak İndir</a></div>'
-            st.markdown(href, unsafe_allow_html=True)
+            corp1 = "KUTYO PREFABRIK: Gelecegi Birlikte Insa Ediyoruz\nKutahya 30 Agustos Organize Sanayi Bolgesi'nde yer alan modern uretim tesisimiz ve guclu kurumsal kimligimizle, betonarme prefabrik yapi sektorunde yenilikci, guvenilir ve kalici cozumler uretiyoruz. Kutahya basta olmak uzere cevre illere sundugumuz anahtar teslim hizmetlerle, sanayicimizin, ureticimizin ve yatirimcimizin yapisal ihtiyaclarini en ust muhendislik standartlarinda karsiliyoruz."
+            corp2 = "Sektorel Tecrube ve Uzman Yonetim\nUzun yillara dayanan koklu sektor tecrubemiz, vizyoner ve dinamik yonetim kadromuzla birleserek KUTYO Prefabrik'in sarsilmaz temelini olusturmaktadir. Projelerimizin her asamasinda kalite disiplininden odun vermeyen uzman ekibimiz; mimari tasarimdan uretime, lojistikten santiye montajina kadar tum surecleri kusursuz bir koordinasyonla yonetmektedir. Kurumsal yapimiz; seffaflik, is guvenligi, surdurulebilirlik ve projeleri zamaninda teslim etme prensipleri uzerine insa edilmistir."
+            corp3 = "Ileri Teknoloji ve Yonetmeliklere Tam Uyum\nYapi guvenligini her seyin ustunde tutan calisma anlayisimizla, uretim hatlarimizda sektordeki en guncel kalip sistemlerini ve ileri teknolojileri kullaniyoruz. Insa ettigimiz tum betonarme prefabrik yapilar; guncel deprem yonetmeliklerine, yapi denetim standartlarina ve uluslararasi kalite normlarina harfiyen uygun olarak tasarlanmakta ve uretilmektedir."
+            corp4 = "Anahtar Teslim Proje Cozumlerimiz\nMusterilerimizin isletme kapasitelerine ve sektorel ihtiyaclarina ozel, fonksiyonel, genis aciklikli ve yuksek dayanimli anahtar teslim betonarme prefabrik yapilar insa ediyoruz. Uzmanlik alanimiza giren yapilar:\n- Sanayi ve Uretim Tesisleri: Modern fabrikalar ve islevsel sanayi dukkanlari.\n- Depolama ve Lojistik: Yuksek tonajli tasima ve depolama kapasitesine sahip lojistik merkezleri.\n- Tarim ve Hayvancilik Yapilari: Iklimlendirme ve hijyen standartlarina uyumlu besihaneler.\n- Ticari ve Sosyal Alanlar: Kapali pazar yerleri ve spor tesisleri.\n\nKUTYO Prefabrik olarak; insaat sureclerindeki hizi, ekonomik cozumleri ve sarsilmaz guvenligi bir araya getiren gucumuzle bolge ekonomisine deger katmaya ve is ortaklarimizin gelecegini insa etmeye devam ediyoruz."
             
+            pdf2.set_font("Arial", "", 10)
+            pdf2.multi_cell(0, 5, corp1)
+            pdf2.ln(3)
+            pdf2.multi_cell(0, 5, corp2)
+            pdf2.ln(3)
+            pdf2.multi_cell(0, 5, corp3)
+            pdf2.ln(3)
+            pdf2.multi_cell(0, 5, corp4)
+            pdf2.ln(8)
+            
+            pdf2.set_font("Arial", "B", 12)
+            pdf2.cell(0, 6, "PROJE BILGILERI VE TEKLIF DETAYI", ln=True, border='B')
+            pdf2.ln(3)
+            
+            bina_m2 = bina_eni * bina_boyu
+            arakat_m2 = bina_eni * o_mesafe if is_arakat else 0.0
+            
+            pdf2.set_font("Arial", "", 11)
+            pdf2.cell(50, 6, "Bina Taban Alani:", 0, 0)
+            pdf2.cell(0, 6, f"{bina_m2:,.2f} m2", 0, 1)
+            pdf2.cell(50, 6, "Bina Yuksekligi:", 0, 0)
+            pdf2.cell(0, 6, f"{h_bina} m", 0, 1)
+            pdf2.cell(50, 6, "Arakat:", 0, 0)
+            pdf2.cell(0, 6, f"Var ({arakat_m2:,.2f} m2)" if is_arakat else "Yok", 0, 1)
+            pdf2.cell(50, 6, "Vinc Yuku:", 0, 0)
+            pdf2.cell(0, 6, "Var (12 tona kadar)" if is_vinc else "Yok", 0, 1)
+            pdf2.cell(50, 6, "Cephe Paneli:", 0, 0)
+            pdf2.cell(0, 6, "Var" if is_cephe else "Yok", 0, 1)
+            pdf2.ln(5)
+            
+            pdf2.set_font("Arial", "B", 14)
+            pdf2.set_fill_color(240, 240, 240)
+            pdf2.cell(0, 10, f"ANAHTAR TESLIM TOPLAM BEDEL: {musteri_fiyat:,.2f} TL + KDV", ln=True, align="C", fill=True)
+            pdf2.ln(8)
+            
+            pdf2.set_font("Arial", "I", 10)
+            closing = "Teklifimizi memnuniyetle karsilamanizi umar, projelerinizde cozum ortaginiz olmaktan gurur duyariz. Degerli isbirliginiz icin tesekkur ederiz."
+            pdf2.multi_cell(0, 5, closing, align="C")
+            
+            out2 = pdf2.output(dest='S')
+            b64_2 = base64.b64encode(out2.encode('latin-1') if isinstance(out2, str) else bytes(out2)).decode()
+            
+            # Butonları yan yana yerleştirme
+            st.markdown("<br>", unsafe_allow_html=True)
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                href1 = f'<div style="text-align: center;"><a href="data:application/pdf;base64,{b64_1}" download="Kutyo_Maliyet_Analizi.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #ff4b4b; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 15px;">📥 Maliyet PDF (İç Kullanım)</a></div>'
+                st.markdown(href1, unsafe_allow_html=True)
+            with col_btn2:
+                href2 = f'<div style="text-align: center;"><a href="data:application/pdf;base64,{b64_2}" download="Kutyo_Musteri_Teklifi.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 15px;">📄 Müşteri Teklif PDF (%25 Kârlı)</a></div>'
+                st.markdown(href2, unsafe_allow_html=True)
+                
         except ImportError:
             st.error("Lütfen terminale `pip install fpdf` yazın.")
