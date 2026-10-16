@@ -490,9 +490,9 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf2.ln(8)
             
             if os.path.exists(font_reg):
-                pdf2.set_font("Roboto", "I", 10)
+                pdf2.set_font("Roboto", "", 10)
             else:
-                pdf2.set_font("Arial", "I", 10)
+                pdf2.set_font("Arial", "", 10)
                 
             closing = "Teklifimizi memnuniyetle karşılamanızı umar, projelerinizde çözüm ortağınız olmaktan gurur duyarız. Değerli işbirliğiniz için teşekkür ederiz."
             pdf2.multi_cell(0, 5, closing, align="C")
