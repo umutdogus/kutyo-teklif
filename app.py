@@ -308,7 +308,6 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf1.set_auto_page_break(auto=True, margin=10) 
             pdf1.add_page()
             
-            # Fontları PDF'e Tanıt
             if os.path.exists(font_reg) and os.path.exists(font_bold):
                 pdf1.add_font("Roboto", "", font_reg)
                 pdf1.add_font("Roboto", "B", font_bold)
@@ -331,7 +330,7 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
                 pdf1.set_font("Arial", "", 9)
                 
             pdf1.cell(0, 5, f"Makas Yönü: {m_mesafe}m | Oluk Yönü: {o_mesafe}m | Bina Yüksekliği: {h_bina}m | Bina Eni: {bina_eni}m | Bina Boyu: {bina_boyu}m", ln=True)
-            pdf1.cell(0, 5, f"Hol Sayısı: {m_hol} | Oluk Aks Arası: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayır'} | Vinç: {'Evet' if is_vinc else 'Hayır'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayır'}", ln=True)
+            pdf1.cell(0, 5, f"Hol Sayısı: {m_hol} | Oluk Aks Arası: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayır'} | Vinç: {'Evet' if is_vinc else 'Hayir'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayır'}", ln=True)
             pdf1.ln(3)
             
             if os.path.exists(font_bold):
@@ -419,24 +418,39 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf2.cell(0, 10, "KÜTYO PREFABRİK TEKLİF FORMU", ln=True, align="C")
             pdf2.ln(5)
             
-            corp1 = "KÜTYO PREFABRİK: Geleceği Birlikte İnşa Ediyoruz\nKütahya 30 Ağustos Organize Sanayi Bölgesi'nde yer alan modern üretim tesisimiz ve güçlü kurumsal kimliğimizle, betonarme prefabrik yapı sektöründe yenilikçi, güvenilir ve kalıcı çözümler üretiyoruz. Kütahya başta olmak üzere çevre illere sunduğumuz anahtar teslim hizmetlerle, sanayicimizin, üreticimizin ve yatırımcımızın yapısal ihtiyaçlarını en üst mühendislik standartlarında karşılıyoruz."
-            corp2 = "Sektörel Tecrübe ve Uzman Yönetim\nUzun yıllara dayanan köklü sektör tecrübemiz, vizyoner ve dinamik yönetim kadromuzla birleşerek KÜTYO Prefabrik'in sarsılmaz temelini oluşturmaktadır. Projelerimizin her aşamasında kalite disiplininden ödün vermeyen uzman ekibimiz; mimari tasarımdan üretime, lojistikten şantiye montajına kadar tüm süreçleri kusursuz bir koordinasyonla yönetmektedir. Kurumsal yapımız; şeffaflık, iş güvenliği, sürdürülebilirlik ve projeleri zamanında teslim etme prensipleri üzerine inşa edilmiştir."
-            corp3 = "İleri Teknoloji ve Yönetmeliklere Tam Uyum\nYapı güvenliğini her şeyin üstünde tutan çalışma anlayışımızla, üretim hatlarımızda sektördeki en güncel kalıp sistemlerini ve ileri teknolojileri kullanıyoruz. İnşa ettiğimiz tüm betonarme prefabrik yapılar; güncel deprem yönetmeliklerine, yapı denetim standartlarına ve uluslararası kalite normlarına harfiyen uygun olarak tasarlanmakta ve üretilmektedir."
-            corp4 = "Anahtar Teslim Proje Çözümlerimiz\nMüşterilerimizin işletme kapasitelerine ve sektörel ihtiyaçlarına özel, fonksiyonel, geniş açıklıklı ve yüksek dayanımlı anahtar teslim betonarme prefabrik yapılar inşa ediyoruz. Uzmanlık alanımıza giren yapılar:\n- Sanayi ve Üretim Tesisleri: Modern fabrikalar ve işlevsel sanayi dükkanları.\n- Depolama ve Lojistik: Yüksek tonajlı taşıma ve depolama kapasitesine sahip lojistik merkezleri.\n- Tarım ve Hayvancılık Yapıları: İklimlendirme ve hijyen standartlarına uyumlu besihaneler.\n- Ticari ve Sosyal Alanlar: Kapalı pazar yerleri ve spor tesisleri.\n\nKÜTYO Prefabrik olarak; inşaat süreçlerindeki hızı, ekonomik çözümleri ve sarsılmaz güvenliği bir araya getiren gücümüzle bölge ekonomisine değer katmaya ve iş ortaklarımızın geleceğini inşa etmeye devam ediyoruz."
+            # Kurumsal Metin Blokları (Başlıklar ve Metinler ayrıldı)
+            baslik1 = "KÜTYO PREFABRİK: Geleceği Birlikte İnşa Ediyoruz"
+            metin1 = "Kütahya 30 Ağustos Organize Sanayi Bölgesi'nde yer alan modern üretim tesisimiz ve güçlü kurumsal kimliğimizle, betonarme prefabrik yapı sektöründe yenilikçi, güvenilir ve kalıcı çözümler üretiyoruz. Kütahya başta olmak üzere çevre illere sunduğumuz anahtar teslim hizmetlerle, sanayicimizin, üreticimizin ve yatırımcımızın yapısal ihtiyaçlarını en üst mühendislik standartlarında karşılıyoruz."
             
-            if os.path.exists(font_reg):
-                pdf2.set_font("Roboto", "", 10)
-            else:
-                pdf2.set_font("Arial", "", 10)
+            baslik2 = "Sektörel Tecrübe ve Uzman Yönetim"
+            metin2 = "Uzun yıllara dayanan köklü sektör tecrübemiz, vizyoner ve dinamik yönetim kadromuzla birleşerek KÜTYO Prefabrik'in sarsılmaz temelini oluşturmaktadır. Projelerimizin her aşamasında kalite disiplininden ödün vermeyen uzman ekibimiz; mimari tasarımdan üretime, lojistikten şantiye montajına kadar tüm süreçleri kusursuz bir koordinasyonla yönetmektedir. Kurumsal yapımız; şeffaflık, iş güvenliği, sürdürülebilirlik ve projeleri zamanında teslim etme prensipleri üzerine inşa edilmiştir."
+            
+            baslik3 = "İleri Teknoloji ve Yönetmeliklere Tam Uyum"
+            metin3 = "Yapı güvenliğini her şeyin üstünde tutan çalışma anlayışımızla, üretim hatlarımızda sektördeki en güncel kalıp sistemlerini ve ileri teknolojileri kullanıyoruz. İnşa ettiğimiz tüm betonarme prefabrik yapılar; güncel deprem yönetmeliklerine, yapı denetim standartlarına ve uluslararası kalite normlarına harfiyen uygun olarak tasarlanmakta ve üretilmektedir."
+            
+            baslik4 = "Anahtar Teslim Proje Çözümlerimiz"
+            metin4 = "Müşterilerimizin işletme kapasitelerine ve sektörel ihtiyaçlarına özel, fonksiyonel, geniş açıklıklı ve yüksek dayanımlı anahtar teslim betonarme prefabrik yapılar inşa ediyoruz. Uzmanlık alanımıza giren yapılar:\n- Sanayi ve Üretim Tesisleri: Modern fabrikalar ve işlevsel sanayi dükkanları.\n- Depolama ve Lojistik: Yüksek tonajlı taşıma ve depolama kapasitesine sahip lojistik merkezleri.\n- Tarım ve Hayvancılık Yapıları: İklimlendirme ve hijyen standartlarına uyumlu besihaneler.\n- Ticari ve Sosyal Alanlar: Kapalı pazar yerleri ve spor tesisleri.\n\nKÜTYO Prefabrik olarak; inşaat süreçlerindeki hızı, ekonomik çözümleri ve sarsılmaz güvenliği bir araya getiren gücümüzle bölge ekonomisine değer katmaya ve iş ortaklarımızın geleceğini inşa etmeye devam ediyoruz."
+            
+            def baslik_metin_yaz(baslik, metin):
+                if os.path.exists(font_bold):
+                    pdf2.set_font("Roboto", "B", 10)
+                else:
+                    pdf2.set_font("Arial", "B", 10)
+                pdf2.cell(0, 5, baslik, ln=True)
                 
-            pdf2.multi_cell(0, 5, corp1)
-            pdf2.ln(3)
-            pdf2.multi_cell(0, 5, corp2)
-            pdf2.ln(3)
-            pdf2.multi_cell(0, 5, corp3)
-            pdf2.ln(3)
-            pdf2.multi_cell(0, 5, corp4)
-            pdf2.ln(8)
+                if os.path.exists(font_reg):
+                    pdf2.set_font("Roboto", "", 10)
+                else:
+                    pdf2.set_font("Arial", "", 10)
+                pdf2.multi_cell(0, 5, metin)
+                pdf2.ln(3)
+
+            # Blokları PDF'e sırayla bastır
+            baslik_metin_yaz(baslik1, metin1)
+            baslik_metin_yaz(baslik2, metin2)
+            baslik_metin_yaz(baslik3, metin3)
+            baslik_metin_yaz(baslik4, metin4)
+            pdf2.ln(5)
             
             if os.path.exists(font_bold):
                 pdf2.set_font("Roboto", "B", 12)
@@ -476,7 +490,7 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf2.ln(8)
             
             if os.path.exists(font_reg):
-                pdf2.set_font("Roboto", "", 10)
+                pdf2.set_font("Roboto", "I", 10)
             else:
                 pdf2.set_font("Arial", "I", 10)
                 
