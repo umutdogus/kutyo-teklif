@@ -227,7 +227,7 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
 
         if is_cephe:
             metraj_list.append({
-                "ELEMAN": "CEPHE PANELİ (m2)", "ADET": cephe_m2,
+                "ELEMAN": "CEPHE PANELİ (m²)", "ADET": cephe_m2,
                 "C30 (m3)": 0.087 * cephe_m2, "C40 (m3)": 0.0, "C45 (m3)": 0.0, "C50 (m3)": 0.0,
                 "DEMİR (kg)": 0.53 * cephe_m2, "PLAKA (kg)": 1.00 * cephe_m2, "HASIR (kg)": 4.67 * cephe_m2,
                 "HALAT (kg)": 0.0, "İZ_OLUK": 0.0, "İZ_CEPHE": 1.50 * cephe_m2, "STRAFOR (m3)": 0.04 * cephe_m2
@@ -284,12 +284,22 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             st.warning(f"Operasyon ve Nakliye Toplamı: ₺ {ekstra_giderler_toplami:,.2f}")
             st.error(f"GENEL TOPLAM TEKLİF BEDELİ: ₺ {(genel_toplam + ekstra_giderler_toplami):,.2f}")
 
-        # --- PDF OLUŞTURMA BÖLÜMÜ ---
+        # --- GÜÇLENDİRİLMİŞ TÜRKÇE PDF OLUŞTURMA BÖLÜMÜ ---
         try:
             from fpdf import FPDF
             import base64
+            import os
+            import urllib.request
             
-            tr_map = str.maketrans("şŞğĞıİöÖçÇüÜ", "sSgGiIoOcCuU")
+            # Google'dan Roboto Fontlarını Otomatik İndir
+            font_reg = "Roboto-Regular.ttf"
+            font_bold = "Roboto-Bold.ttf"
+            
+            if not os.path.exists(font_reg):
+                urllib.request.urlretrieve("https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Regular.ttf", font_reg)
+            if not os.path.exists(font_bold):
+                urllib.request.urlretrieve("https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Bold.ttf", font_bold)
+            
             total_maliyet = genel_toplam + ekstra_giderler_toplami
             musteri_fiyat = total_maliyet * 1.25  # %25 Kar Marjı
             
@@ -297,32 +307,60 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf1 = FPDF(orientation='L', unit='mm', format='A4')
             pdf1.set_auto_page_break(auto=True, margin=10) 
             pdf1.add_page()
-            pdf1.set_font("Arial", "B", 15)
-            pdf1.cell(0, 8, "KUTYO PREFABRIK IC MALIYET RAPORU", ln=True, align="C")
+            
+            # Fontları PDF'e Tanıt
+            if os.path.exists(font_reg) and os.path.exists(font_bold):
+                pdf1.add_font("Roboto", "", font_reg)
+                pdf1.add_font("Roboto", "B", font_bold)
+                pdf1.set_font("Roboto", "B", 15)
+            else:
+                pdf1.set_font("Arial", "B", 15)
+                
+            pdf1.cell(0, 8, "KÜTYO PREFABRİK İÇ MALİYET RAPORU", ln=True, align="C")
             pdf1.ln(3)
             
-            pdf1.set_font("Arial", "B", 10)
-            pdf1.cell(0, 5, "1. PROJE BILGILERI", ln=True)
-            pdf1.set_font("Arial", "", 9)
-            pdf1.cell(0, 5, f"Makas Yonu: {m_mesafe}m | Oluk Yonu: {o_mesafe}m | Bina Yuksekligi: {h_bina}m | Bina Eni: {bina_eni}m | Bina Boyu: {bina_boyu}m", ln=True)
-            pdf1.cell(0, 5, f"Hol Sayisi: {m_hol} | Oluk Aks Arasi: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayir'} | Vinc: {'Evet' if is_vinc else 'Hayir'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayir'}", ln=True)
+            if os.path.exists(font_reg):
+                pdf1.set_font("Roboto", "B", 10)
+            else:
+                pdf1.set_font("Arial", "B", 10)
+            pdf1.cell(0, 5, "1. PROJE BİLGİLERİ", ln=True)
+            
+            if os.path.exists(font_reg):
+                pdf1.set_font("Roboto", "", 9)
+            else:
+                pdf1.set_font("Arial", "", 9)
+                
+            pdf1.cell(0, 5, f"Makas Yönü: {m_mesafe}m | Oluk Yönü: {o_mesafe}m | Bina Yüksekliği: {h_bina}m | Bina Eni: {bina_eni}m | Bina Boyu: {bina_boyu}m", ln=True)
+            pdf1.cell(0, 5, f"Hol Sayısı: {m_hol} | Oluk Aks Arası: {o_aks} | Arakat: {'Evet' if is_arakat else 'Hayır'} | Vinç: {'Evet' if is_vinc else 'Hayır'} | Cephe Paneli: {'Evet' if is_cephe else 'Hayır'}", ln=True)
             pdf1.ln(3)
             
-            pdf1.set_font("Arial", "B", 10)
-            pdf1.cell(0, 5, "2. METRAJ VE MALIYET TABLOSU", ln=True)
+            if os.path.exists(font_bold):
+                pdf1.set_font("Roboto", "B", 10)
+            else:
+                pdf1.set_font("Arial", "B", 10)
+                
+            pdf1.cell(0, 5, "2. METRAJ VE MALİYET TABLOSU", ln=True)
             
-            cols = ["ELEMAN", "MIKTAR", "C30", "C40", "C45", "C50", "DEMIR", "PLK.", "HSR.", "HLT.", "IZL.O", "IZL.C", "STRFR", "TOPLAM(TL)"]
+            cols = ["ELEMAN", "MİKTAR", "C30", "C40", "C45", "C50", "DEMİR", "PLK.", "HSR.", "HLT.", "İZL.O", "İZL.C", "STRFR", "TOPLAM(TL)"]
             col_widths = [40, 14, 13, 13, 13, 13, 15, 12, 14, 12, 12, 12, 14, 25]
             
             pdf1.set_fill_color(220, 230, 241) 
-            pdf1.set_font("Arial", "B", 7)
+            if os.path.exists(font_bold):
+                pdf1.set_font("Roboto", "B", 7)
+            else:
+                pdf1.set_font("Arial", "B", 7)
+                
             for i, col in enumerate(cols):
                 pdf1.cell(col_widths[i], 5, col, border=1, align="C", fill=True)
             pdf1.ln()
             
-            pdf1.set_font("Arial", "", 7)
+            if os.path.exists(font_reg):
+                pdf1.set_font("Roboto", "", 7)
+            else:
+                pdf1.set_font("Arial", "", 7)
+                
             for idx, row in df.iterrows():
-                el_name = str(row['ELEMAN']).translate(tr_map)
+                el_name = str(row['ELEMAN'])
                 pdf1.cell(col_widths[0], 5, el_name, border=1)
                 adet_str = f"{row['ADET']:.2f}" if isinstance(row['ADET'], float) and not row['ADET'].is_integer() else str(int(row['ADET']))
                 pdf1.cell(col_widths[1], 5, adet_str, border=1, align="C")
@@ -341,16 +379,27 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
                 pdf1.ln()
                 
             pdf1.ln(3)
-            pdf1.set_font("Arial", "B", 10)
-            pdf1.cell(0, 5, "3. SANTIYE VE OPERASYON MALIYETLERI", ln=True)
-            pdf1.set_font("Arial", "", 9)
+            
+            if os.path.exists(font_bold):
+                pdf1.set_font("Roboto", "B", 10)
+            else:
+                pdf1.set_font("Arial", "B", 10)
+            pdf1.cell(0, 5, "3. ŞANTİYE VE OPERASYON MALİYETLERİ", ln=True)
+            
+            if os.path.exists(font_reg):
+                pdf1.set_font("Roboto", "", 9)
+            else:
+                pdf1.set_font("Arial", "", 9)
             pdf1.cell(0, 5, f"Toplam Beton Hacmi: {toplam_beton_m3:.2f} m3 | Toplam Tonaj: {toplam_tonaj:.2f} Ton", ln=True)
-            pdf1.cell(0, 5, f"Malzeme Maliyeti: {genel_toplam:,.2f} TL | Operasyon ve Nakliye Toplami: {ekstra_giderler_toplami:,.2f} TL", ln=True)
+            pdf1.cell(0, 5, f"Malzeme Maliyeti: {genel_toplam:,.2f} TL | Operasyon ve Nakliye Toplamı: {ekstra_giderler_toplami:,.2f} TL", ln=True)
             pdf1.ln(2)
             
-            pdf1.set_font("Arial", "B", 11)
+            if os.path.exists(font_bold):
+                pdf1.set_font("Roboto", "B", 11)
+            else:
+                pdf1.set_font("Arial", "B", 11)
             pdf1.set_fill_color(255, 255, 204) 
-            pdf1.cell(0, 7, f"GENEL TOPLAM MALIYET BEDELI: {total_maliyet:,.2f} TL", ln=True, fill=True)
+            pdf1.cell(0, 7, f"GENEL TOPLAM MALİYET BEDELİ: {total_maliyet:,.2f} TL", ln=True, fill=True)
             
             out1 = pdf1.output(dest='S')
             b64_1 = base64.b64encode(out1.encode('latin-1') if isinstance(out1, str) else bytes(out1)).decode()
@@ -360,16 +409,26 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf2.set_auto_page_break(auto=True, margin=15)
             pdf2.add_page()
             
-            pdf2.set_font("Arial", "B", 16)
-            pdf2.cell(0, 10, "KUTYO PREFABRIK TEKLIF FORMU", ln=True, align="C")
+            if os.path.exists(font_reg) and os.path.exists(font_bold):
+                pdf2.add_font("Roboto", "", font_reg)
+                pdf2.add_font("Roboto", "B", font_bold)
+                pdf2.set_font("Roboto", "B", 16)
+            else:
+                pdf2.set_font("Arial", "B", 16)
+                
+            pdf2.cell(0, 10, "KÜTYO PREFABRİK TEKLİF FORMU", ln=True, align="C")
             pdf2.ln(5)
             
-            corp1 = "KUTYO PREFABRIK: Gelecegi Birlikte Insa Ediyoruz\nKutahya 30 Agustos Organize Sanayi Bolgesi'nde yer alan modern uretim tesisimiz ve guclu kurumsal kimligimizle, betonarme prefabrik yapi sektorunde yenilikci, guvenilir ve kalici cozumler uretiyoruz. Kutahya basta olmak uzere cevre illere sundugumuz anahtar teslim hizmetlerle, sanayicimizin, ureticimizin ve yatirimcimizin yapisal ihtiyaclarini en ust muhendislik standartlarinda karsiliyoruz."
-            corp2 = "Sektorel Tecrube ve Uzman Yonetim\nUzun yillara dayanan koklu sektor tecrubemiz, vizyoner ve dinamik yonetim kadromuzla birleserek KUTYO Prefabrik'in sarsilmaz temelini olusturmaktadir. Projelerimizin her asamasinda kalite disiplininden odun vermeyen uzman ekibimiz; mimari tasarimdan uretime, lojistikten santiye montajina kadar tum surecleri kusursuz bir koordinasyonla yonetmektedir. Kurumsal yapimiz; seffaflik, is guvenligi, surdurulebilirlik ve projeleri zamaninda teslim etme prensipleri uzerine insa edilmistir."
-            corp3 = "Ileri Teknoloji ve Yonetmeliklere Tam Uyum\nYapi guvenligini her seyin ustunde tutan calisma anlayisimizla, uretim hatlarimizda sektordeki en guncel kalip sistemlerini ve ileri teknolojileri kullaniyoruz. Insa ettigimiz tum betonarme prefabrik yapilar; guncel deprem yonetmeliklerine, yapi denetim standartlarina ve uluslararasi kalite normlarina harfiyen uygun olarak tasarlanmakta ve uretilmektedir."
-            corp4 = "Anahtar Teslim Proje Cozumlerimiz\nMusterilerimizin isletme kapasitelerine ve sektorel ihtiyaclarina ozel, fonksiyonel, genis aciklikli ve yuksek dayanimli anahtar teslim betonarme prefabrik yapilar insa ediyoruz. Uzmanlik alanimiza giren yapilar:\n- Sanayi ve Uretim Tesisleri: Modern fabrikalar ve islevsel sanayi dukkanlari.\n- Depolama ve Lojistik: Yuksek tonajli tasima ve depolama kapasitesine sahip lojistik merkezleri.\n- Tarim ve Hayvancilik Yapilari: Iklimlendirme ve hijyen standartlarina uyumlu besihaneler.\n- Ticari ve Sosyal Alanlar: Kapali pazar yerleri ve spor tesisleri.\n\nKUTYO Prefabrik olarak; insaat sureclerindeki hizi, ekonomik cozumleri ve sarsilmaz guvenligi bir araya getiren gucumuzle bolge ekonomisine deger katmaya ve is ortaklarimizin gelecegini insa etmeye devam ediyoruz."
+            corp1 = "KÜTYO PREFABRİK: Geleceği Birlikte İnşa Ediyoruz\nKütahya 30 Ağustos Organize Sanayi Bölgesi'nde yer alan modern üretim tesisimiz ve güçlü kurumsal kimliğimizle, betonarme prefabrik yapı sektöründe yenilikçi, güvenilir ve kalıcı çözümler üretiyoruz. Kütahya başta olmak üzere çevre illere sunduğumuz anahtar teslim hizmetlerle, sanayicimizin, üreticimizin ve yatırımcımızın yapısal ihtiyaçlarını en üst mühendislik standartlarında karşılıyoruz."
+            corp2 = "Sektörel Tecrübe ve Uzman Yönetim\nUzun yıllara dayanan köklü sektör tecrübemiz, vizyoner ve dinamik yönetim kadromuzla birleşerek KÜTYO Prefabrik'in sarsılmaz temelini oluşturmaktadır. Projelerimizin her aşamasında kalite disiplininden ödün vermeyen uzman ekibimiz; mimari tasarımdan üretime, lojistikten şantiye montajına kadar tüm süreçleri kusursuz bir koordinasyonla yönetmektedir. Kurumsal yapımız; şeffaflık, iş güvenliği, sürdürülebilirlik ve projeleri zamanında teslim etme prensipleri üzerine inşa edilmiştir."
+            corp3 = "İleri Teknoloji ve Yönetmeliklere Tam Uyum\nYapı güvenliğini her şeyin üstünde tutan çalışma anlayışımızla, üretim hatlarımızda sektördeki en güncel kalıp sistemlerini ve ileri teknolojileri kullanıyoruz. İnşa ettiğimiz tüm betonarme prefabrik yapılar; güncel deprem yönetmeliklerine, yapı denetim standartlarına ve uluslararası kalite normlarına harfiyen uygun olarak tasarlanmakta ve üretilmektedir."
+            corp4 = "Anahtar Teslim Proje Çözümlerimiz\nMüşterilerimizin işletme kapasitelerine ve sektörel ihtiyaçlarına özel, fonksiyonel, geniş açıklıklı ve yüksek dayanımlı anahtar teslim betonarme prefabrik yapılar inşa ediyoruz. Uzmanlık alanımıza giren yapılar:\n- Sanayi ve Üretim Tesisleri: Modern fabrikalar ve işlevsel sanayi dükkanları.\n- Depolama ve Lojistik: Yüksek tonajlı taşıma ve depolama kapasitesine sahip lojistik merkezleri.\n- Tarım ve Hayvancılık Yapıları: İklimlendirme ve hijyen standartlarına uyumlu besihaneler.\n- Ticari ve Sosyal Alanlar: Kapalı pazar yerleri ve spor tesisleri.\n\nKÜTYO Prefabrik olarak; inşaat süreçlerindeki hızı, ekonomik çözümleri ve sarsılmaz güvenliği bir araya getiren gücümüzle bölge ekonomisine değer katmaya ve iş ortaklarımızın geleceğini inşa etmeye devam ediyoruz."
             
-            pdf2.set_font("Arial", "", 10)
+            if os.path.exists(font_reg):
+                pdf2.set_font("Roboto", "", 10)
+            else:
+                pdf2.set_font("Arial", "", 10)
+                
             pdf2.multi_cell(0, 5, corp1)
             pdf2.ln(3)
             pdf2.multi_cell(0, 5, corp2)
@@ -379,33 +438,49 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
             pdf2.multi_cell(0, 5, corp4)
             pdf2.ln(8)
             
-            pdf2.set_font("Arial", "B", 12)
-            pdf2.cell(0, 6, "PROJE BILGILERI VE TEKLIF DETAYI", ln=True, border='B')
+            if os.path.exists(font_bold):
+                pdf2.set_font("Roboto", "B", 12)
+            else:
+                pdf2.set_font("Arial", "B", 12)
+                
+            pdf2.cell(0, 6, "PROJE BİLGİLERİ VE TEKLİF DETAYI", ln=True, border='B')
             pdf2.ln(3)
             
             bina_m2 = bina_eni * bina_boyu
             arakat_m2 = bina_eni * o_mesafe if is_arakat else 0.0
             
-            pdf2.set_font("Arial", "", 11)
-            pdf2.cell(50, 6, "Bina Taban Alani:", 0, 0)
-            pdf2.cell(0, 6, f"{bina_m2:,.2f} m2", 0, 1)
-            pdf2.cell(50, 6, "Bina Yuksekligi:", 0, 0)
+            if os.path.exists(font_reg):
+                pdf2.set_font("Roboto", "", 11)
+            else:
+                pdf2.set_font("Arial", "", 11)
+                
+            pdf2.cell(50, 6, "Bina Taban Alanı:", 0, 0)
+            pdf2.cell(0, 6, f"{bina_m2:,.2f} m²", 0, 1)
+            pdf2.cell(50, 6, "Bina Yüksekliği:", 0, 0)
             pdf2.cell(0, 6, f"{h_bina} m", 0, 1)
             pdf2.cell(50, 6, "Arakat:", 0, 0)
-            pdf2.cell(0, 6, f"Var ({arakat_m2:,.2f} m2)" if is_arakat else "Yok", 0, 1)
-            pdf2.cell(50, 6, "Vinc Yuku:", 0, 0)
+            pdf2.cell(0, 6, f"Var ({arakat_m2:,.2f} m²)" if is_arakat else "Yok", 0, 1)
+            pdf2.cell(50, 6, "Vinç Yükü:", 0, 0)
             pdf2.cell(0, 6, "Var (12 tona kadar)" if is_vinc else "Yok", 0, 1)
             pdf2.cell(50, 6, "Cephe Paneli:", 0, 0)
             pdf2.cell(0, 6, "Var" if is_cephe else "Yok", 0, 1)
             pdf2.ln(5)
             
-            pdf2.set_font("Arial", "B", 14)
+            if os.path.exists(font_bold):
+                pdf2.set_font("Roboto", "B", 14)
+            else:
+                pdf2.set_font("Arial", "B", 14)
+                
             pdf2.set_fill_color(240, 240, 240)
-            pdf2.cell(0, 10, f"ANAHTAR TESLIM TOPLAM BEDEL: {musteri_fiyat:,.2f} TL + KDV", ln=True, align="C", fill=True)
+            pdf2.cell(0, 10, f"ANAHTAR TESLİM TOPLAM BEDEL: {musteri_fiyat:,.2f} TL + KDV", ln=True, align="C", fill=True)
             pdf2.ln(8)
             
-            pdf2.set_font("Arial", "I", 10)
-            closing = "Teklifimizi memnuniyetle karsilamanizi umar, projelerinizde cozum ortaginiz olmaktan gurur duyariz. Degerli isbirliginiz icin tesekkur ederiz."
+            if os.path.exists(font_reg):
+                pdf2.set_font("Roboto", "", 10)
+            else:
+                pdf2.set_font("Arial", "I", 10)
+                
+            closing = "Teklifimizi memnuniyetle karşılamanızı umar, projelerinizde çözüm ortağınız olmaktan gurur duyarız. Değerli işbirliğiniz için teşekkür ederiz."
             pdf2.multi_cell(0, 5, closing, align="C")
             
             out2 = pdf2.output(dest='S')
@@ -422,4 +497,4 @@ if st.button("Metraj ve Fiyat Çıkar", type="primary"):
                 st.markdown(href2, unsafe_allow_html=True)
                 
         except ImportError:
-            st.error("Lütfen terminale `pip install fpdf` yazın.")
+            st.error("Lütfen terminale `pip install fpdf2` yazın veya requirements.txt dosyanızı güncelleyin.")
